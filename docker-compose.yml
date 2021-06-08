@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: food_reiew_database
+    ports:
+      - 3306:3306
+    networks:
+      - food_reiew
+    volumes:
+      - mysql_storge_food:/var/lib/mysql
+      - ./Review-Shop-Food/mysql/init:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    environment:
+      MYSQL_DATABASE: food
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    hostname: mysql
+
+    # database manager
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      - mysql
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mysql
+      - PMA_USER=root
+    ports:
+      - 8080:80
+    networks:
+      - food_reiew
+  backend:
+    build:
+      context: .
+      dockerfile: Review-Shop-Food/Dockerfile
+    ports:
+      - 9091:9091
+    networks:
+      - food_reiew
+    volumes:
+      - ./Review-Shop-Food:/app
+  fontend:
+    build:
+      context: .
+      dockerfile: food_review_fe/Dockerfile
+    ports:
+      - 3000:3000
+    networks:
+      - food_reiew
+    volumes:
+      - "/app/node_modules"
+      - ./food_review_fe:/app
+networks:
+  food_reiew:
+    driver: bridge
+volumes:
+  mysql_storge_food: {}
